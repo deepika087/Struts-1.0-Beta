@@ -859,24 +859,10 @@ public final class PropertyUtils {
         String methodName = method.getName();
         Class[] parameterTypes = method.getParameterTypes();
         Class[] interfaces = clazz.getInterfaces();
-        for (int i = 0; i < interfaces.length; i++) {
-            // Is this interface public?
-            if (!Modifier.isPublic(interfaces[i].getModifiers())) {
-                continue;
-            }
-            // Does the method exist on this interface?
-            try {
-                method = interfaces[i].getDeclaredMethod(methodName,
-                                                         parameterTypes);
-            } catch (NoSuchMethodException e) {
-                continue;
-            }
-            // We have found what we are looking for
-            return (method);
-        }
+        method = getAccessibleMethodFromInterfaceNest(clazz,methodName,parameterTypes);
 
-        // We are out of luck
-        return (null);
+        //Null will be handled here.          
+        return (method);
 
     }
 
@@ -906,5 +892,33 @@ public final class PropertyUtils {
 
     }
 
+    //My Function
+    private static Method getAccessibleMethodFromInterfaceNest(
+      Class parentInterfaceClass,
+      String methodName,
+      Class[] parameterTypes)
+    {
+       Method method=null;
+       // Check the implemented interfaces
+       Class[] interfaces = parentInterfaceClass.getInterfaces();
+       for (int i = 0; i < interfaces.length; i++) {
 
+         // Is this interface public?
+         if (!Modifier.isPublic(interfaces[i].getModifiers())) {
+         continue;
+         }
+
+         // Does the method exist on this interface?
+         try {
+           method = interfaces[i].getDeclaredMethod(methodName,
+           parameterTypes);
+         } catch (NoSuchMethodException e) {
+
+         //try recursively looking for the method
+         method = getAccessibleMethodFromInterfaceNest(interfaces[i],methodName,parameterTypes);
+         }
+       }
+      // Return whatever we have null or a good method
+      return (method);
+    }
 }
